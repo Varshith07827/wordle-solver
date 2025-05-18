@@ -74,6 +74,11 @@ class WordleSolver:
         
         return True
 
+    def reset(self):
+        """Reset the solver to its initial state."""
+        self.possible_words = set(self.word_list)
+        self.letter_frequencies = self._calculate_letter_frequencies()
+
 def load_word_list(filename: str) -> List[str]:
     """Load a list of words from a file."""
     with open(filename, 'r') as f:
@@ -114,6 +119,17 @@ def update_feedback():
     return jsonify({
         'remaining_words': len(solver.possible_words),
         'next_guess': solver.get_best_guess().upper()
+    })
+
+@app.route('/reset', methods=['POST'])
+def reset_game():
+    if not solver:
+        return jsonify({'error': 'Word list not loaded'}), 500
+    
+    solver.reset()
+    return jsonify({
+        'guess': solver.get_best_guess().upper(),
+        'remaining_words': len(solver.possible_words)
     })
 
 if __name__ == "__main__":
