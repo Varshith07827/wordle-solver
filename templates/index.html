@@ -5,92 +5,294 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wordle Solver</title>
     <style>
+        :root {
+            --green: #6aaa64;
+            --yellow: #c9b458;
+            --gray: #787c7e;
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --background: #f8f9fa;
+            --card-bg: #ffffff;
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
-            max-width: 800px;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f0f0f0;
+            background-color: var(--background);
+            color: var(--primary);
+            line-height: 1.6;
         }
+
         .container {
-            background-color: white;
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--secondary);
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .instructions {
+            background-color: #f8f9fa;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            border-left: 4px solid var(--primary);
         }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
+
+        .instructions h2 {
+            margin-top: 0;
+            color: var(--primary);
         }
+
+        .instructions ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+        }
+
+        .color-legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
         .guess-box {
             display: flex;
             gap: 10px;
-            margin: 20px 0;
+            margin: 30px 0;
             justify-content: center;
         }
+
         .letter {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border: 2px solid #ccc;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             text-transform: uppercase;
             background-color: white;
+            border-radius: 8px;
+            transition: all 0.3s ease;
         }
+
         .feedback-controls {
             display: flex;
-            gap: 10px;
-            margin: 20px 0;
+            gap: 15px;
+            margin: 30px 0;
             justify-content: center;
             flex-wrap: wrap;
         }
+
         .feedback-btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            min-width: 100px;
         }
-        .green { background-color: #6aaa64; color: white; }
-        .yellow { background-color: #c9b458; color: white; }
-        .gray { background-color: #787c7e; color: white; }
+
+        .feedback-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .green { background-color: var(--green); color: white; }
+        .yellow { background-color: var(--yellow); color: white; }
+        .gray { background-color: var(--gray); color: white; }
+
         .submit-btn {
-            background-color: #2c3e50;
+            background-color: var(--primary);
             color: white;
-            padding: 10px 20px;
+            padding: 15px 30px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             display: block;
-            margin: 20px auto;
+            margin: 30px auto;
+            font-size: 18px;
+            transition: all 0.3s ease;
         }
+
         .submit-btn:hover {
-            background-color: #34495e;
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
+
         .status {
             text-align: center;
             margin: 20px 0;
             font-weight: bold;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
         }
+
         .error {
             color: #e74c3c;
             text-align: center;
             margin: 10px 0;
+            padding: 10px;
+            background-color: #fde8e8;
+            border-radius: 8px;
+        }
+
+        .remaining-words {
+            text-align: center;
+            font-size: 1.2em;
+            color: var(--secondary);
+            margin: 20px 0;
+        }
+
+        .help-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .help-button:hover {
+            transform: scale(1.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .close-button {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--secondary);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Wordle Solver</h1>
-        <div class="status" id="status">Loading...</div>
+        <div class="subtitle">Your AI-powered Wordle assistant</div>
+
+        <div class="instructions">
+            <h2>How to Use</h2>
+            <ol>
+                <li>The solver will suggest a word for you to try in Wordle</li>
+                <li>Enter this word in your Wordle game</li>
+                <li>For each letter in the word, click the corresponding color button:
+                    <ul>
+                        <li><strong>Green</strong> - Letter is correct and in the right position</li>
+                        <li><strong>Yellow</strong> - Letter is correct but in the wrong position</li>
+                        <li><strong>Gray</strong> - Letter is not in the word</li>
+                    </ul>
+                </li>
+                <li>Click "Submit Feedback" to get the next suggested word</li>
+                <li>Repeat until you solve the Wordle!</li>
+            </ol>
+        </div>
+
+        <div class="color-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: var(--green)"></div>
+                <span>Correct Position</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: var(--yellow)"></div>
+                <span>Wrong Position</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: var(--gray)"></div>
+                <span>Not in Word</span>
+            </div>
+        </div>
+
+        <div class="status" id="status">Loading your first guess...</div>
         <div class="guess-box" id="guessBox"></div>
         <div class="feedback-controls" id="feedbackControls"></div>
+        <div class="remaining-words" id="remainingWords"></div>
         <button class="submit-btn" id="submitBtn" onclick="submitFeedback()">Submit Feedback</button>
+    </div>
+
+    <div class="help-button" onclick="showHelp()">?</div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="hideHelp()">&times;</span>
+            <h2>Tips for Using Wordle Solver</h2>
+            <ul>
+                <li>The solver uses letter frequency analysis to suggest optimal words</li>
+                <li>Each suggestion aims to eliminate as many possible words as possible</li>
+                <li>Be careful to enter the feedback correctly - one mistake can lead to incorrect suggestions</li>
+                <li>The number of remaining possible words is shown after each guess</li>
+                <li>If you make a mistake, you can refresh the page to start over</li>
+            </ul>
+        </div>
     </div>
 
     <script>
@@ -108,6 +310,7 @@
                 currentGuess = data.guess;
                 displayGuess(currentGuess);
                 setupFeedbackControls();
+                document.getElementById('status').textContent = 'Enter this word in your Wordle game, then provide feedback below:';
             } catch (error) {
                 document.getElementById('status').textContent = 'Error loading guess';
             }
@@ -130,12 +333,13 @@
             for (let i = 0; i < 5; i++) {
                 const buttonGroup = document.createElement('div');
                 buttonGroup.style.display = 'flex';
-                buttonGroup.style.gap = '5px';
+                buttonGroup.style.gap = '8px';
                 
                 ['green', 'yellow', 'gray'].forEach(color => {
                     const button = document.createElement('button');
                     button.className = `feedback-btn ${color}`;
                     button.textContent = color.charAt(0).toUpperCase();
+                    button.title = `${color.charAt(0).toUpperCase() + color.slice(1)} - ${getColorDescription(color)}`;
                     button.onclick = () => setFeedback(i, color);
                     buttonGroup.appendChild(button);
                 });
@@ -144,11 +348,21 @@
             }
         }
 
+        function getColorDescription(color) {
+            switch(color) {
+                case 'green': return 'Correct position';
+                case 'yellow': return 'Wrong position';
+                case 'gray': return 'Not in word';
+                default: return '';
+            }
+        }
+
         function setFeedback(index, color) {
             currentFeedback[index] = color;
             const letters = document.querySelectorAll('.letter');
             letters[index].style.backgroundColor = color;
             letters[index].style.color = 'white';
+            letters[index].style.borderColor = color;
         }
 
         async function submitFeedback() {
@@ -175,14 +389,32 @@
                     return;
                 }
 
-                document.getElementById('status').textContent = 
+                document.getElementById('remainingWords').textContent = 
                     `Remaining possible words: ${data.remaining_words}`;
+                document.getElementById('status').textContent = 
+                    'Enter this word in your Wordle game, then provide feedback below:';
                 currentGuess = data.next_guess;
                 currentFeedback = Array(5).fill(null);
                 displayGuess(currentGuess);
                 setupFeedbackControls();
             } catch (error) {
                 document.getElementById('status').textContent = 'Error submitting feedback';
+            }
+        }
+
+        function showHelp() {
+            document.getElementById('helpModal').style.display = 'block';
+        }
+
+        function hideHelp() {
+            document.getElementById('helpModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('helpModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
             }
         }
 
