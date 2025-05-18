@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Solver</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .guess-box {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        .letter {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background-color: white;
+        }
+        .feedback-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .feedback-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .green { background-color: #6aaa64; color: white; }
+        .yellow { background-color: #c9b458; color: white; }
+        .gray { background-color: #787c7e; color: white; }
+        .submit-btn {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            display: block;
+            margin: 20px auto;
+        }
+        .submit-btn:hover {
+            background-color: #34495e;
+        }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Wordle Solver</h1>
+        <div class="status" id="status">Loading...</div>
+        <div class="guess-box" id="guessBox"></div>
+        <div class="feedback-controls" id="feedbackControls"></div>
+        <button class="submit-btn" id="submitBtn" onclick="submitFeedback()">Submit Feedback</button>
+    </div>
+
+    <script>
+        let currentGuess = '';
+        let currentFeedback = Array(5).fill(null);
+
+        async function loadInitialGuess() {
+            try {
+                const response = await fetch('/get_guess');
+                const data = await response.json();
+                if (data.error) {
+                    document.getElementById('status').textContent = data.error;
+                    return;
+                }
+                currentGuess = data.guess;
+                displayGuess(currentGuess);
+                setupFeedbackControls();
+            } catch (error) {
+                document.getElementById('status').textContent = 'Error loading guess';
+            }
+        }
+
+        function displayGuess(guess) {
+            const guessBox = document.getElementById('guessBox');
+            guessBox.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const letter = document.createElement('div');
+                letter.className = 'letter';
+                letter.textContent = guess[i];
+                guessBox.appendChild(letter);
+            }
+        }
+
+        function setupFeedbackControls() {
+            const controls = document.getElementById('feedbackControls');
+            controls.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const buttonGroup = document.createElement('div');
+                buttonGroup.style.display = 'flex';
+                buttonGroup.style.gap = '5px';
+                
+                ['green', 'yellow', 'gray'].forEach(color => {
+                    const button = document.createElement('button');
+                    button.className = `feedback-btn ${color}`;
+                    button.textContent = color.charAt(0).toUpperCase();
+                    button.onclick = () => setFeedback(i, color);
+                    buttonGroup.appendChild(button);
+                });
+                
+                controls.appendChild(buttonGroup);
+            }
+        }
+
+        function setFeedback(index, color) {
+            currentFeedback[index] = color;
+            const letters = document.querySelectorAll('.letter');
+            letters[index].style.backgroundColor = color;
+            letters[index].style.color = 'white';
+        }
+
+        async function submitFeedback() {
+            if (currentFeedback.some(f => f === null)) {
+                document.getElementById('status').textContent = 'Please provide feedback for all letters';
+                return;
+            }
+
+            try {
+                const response = await fetch('/update_feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        guess: currentGuess,
+                        feedback: currentFeedback
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    document.getElementById('status').textContent = data.error;
+                    return;
+                }
+
+                document.getElementById('status').textContent = 
+                    `Remaining possible words: ${data.remaining_words}`;
+                currentGuess = data.next_guess;
+                currentFeedback = Array(5).fill(null);
+                displayGuess(currentGuess);
+                setupFeedbackControls();
+            } catch (error) {
+                document.getElementById('status').textContent = 'Error submitting feedback';
+            }
+        }
+
+        // Load initial guess when page loads
+        window.onload = loadInitialGuess;
+    </script>
+</body>
+</html> 
