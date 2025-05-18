@@ -145,16 +145,35 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            display: block;
-            margin: 30px auto;
+            display: inline-block;
+            margin: 30px 10px;
             font-size: 18px;
             transition: all 0.3s ease;
         }
 
-        .submit-btn:hover {
-            background-color: var(--secondary);
+        .reset-btn {
+            background-color: #e74c3c;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-block;
+            margin: 30px 10px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background-color: #c0392b;
             transform: translateY(-2px);
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
         }
 
         .status {
@@ -276,7 +295,10 @@
         <div class="guess-box" id="guessBox"></div>
         <div class="feedback-controls" id="feedbackControls"></div>
         <div class="remaining-words" id="remainingWords"></div>
-        <button class="submit-btn" id="submitBtn" onclick="submitFeedback()">Submit Feedback</button>
+        <div class="button-container">
+            <button class="submit-btn" id="submitBtn" onclick="submitFeedback()">Submit Feedback</button>
+            <button class="reset-btn" id="resetBtn" onclick="resetGame()">Reset Game</button>
+        </div>
     </div>
 
     <div class="help-button" onclick="showHelp()">?</div>
@@ -399,6 +421,48 @@
                 setupFeedbackControls();
             } catch (error) {
                 document.getElementById('status').textContent = 'Error submitting feedback';
+            }
+        }
+
+        async function resetGame() {
+            try {
+                const response = await fetch('/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    document.getElementById('status').textContent = data.error;
+                    return;
+                }
+
+                // Reset the feedback array
+                currentFeedback = Array(5).fill(null);
+                
+                // Reset the letter colors
+                const letters = document.querySelectorAll('.letter');
+                letters.forEach(letter => {
+                    letter.style.backgroundColor = 'white';
+                    letter.style.color = 'var(--primary)';
+                    letter.style.borderColor = '#ccc';
+                });
+                
+                // Update with new guess
+                currentGuess = data.guess;
+                displayGuess(currentGuess);
+                setupFeedbackControls();
+                
+                // Update remaining words
+                document.getElementById('remainingWords').textContent = 
+                    `Remaining possible words: ${data.remaining_words}`;
+                
+                // Update status message
+                document.getElementById('status').textContent = 'Game reset! Enter this word in your Wordle game:';
+            } catch (error) {
+                document.getElementById('status').textContent = 'Error resetting game';
             }
         }
 
